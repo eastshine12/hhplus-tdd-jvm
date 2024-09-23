@@ -1,4 +1,4 @@
-package io.hhplus.tdd.point
+package io.hhplus.tdd.point.domain
 
 data class PointHistory(
     val id: Long,
@@ -14,5 +14,6 @@ data class PointHistory(
  * - USE : 사용
  */
 enum class TransactionType {
-    CHARGE, USE
+    CHARGE,
+    USE,
 }
