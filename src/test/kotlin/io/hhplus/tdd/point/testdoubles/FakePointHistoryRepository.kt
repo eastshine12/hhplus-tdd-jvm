@@ -20,7 +20,7 @@ class FakePointHistoryRepository : PointHistoryRepository {
                 userId = id,
                 amount = amount,
                 type = transactionType,
-                timeMillis = updateMillis
+                timeMillis = updateMillis,
             )
         pointHistories.add(pointHistory)
         return pointHistory

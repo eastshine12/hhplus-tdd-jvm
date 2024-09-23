@@ -1,9 +1,14 @@
 package io.hhplus.tdd.point.controller
 
-import io.hhplus.tdd.point.domain.PointHistory
-import io.hhplus.tdd.point.domain.UserPoint
+import io.hhplus.tdd.point.dto.ChargePointResponse
+import io.hhplus.tdd.point.dto.PointHistoryResponse
+import io.hhplus.tdd.point.dto.PointRequest
+import io.hhplus.tdd.point.dto.UsePointResponse
+import io.hhplus.tdd.point.dto.UserPointResponse
+import io.hhplus.tdd.point.service.PointService
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -13,7 +18,9 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/point")
-class PointController {
+class PointController(
+    private val pointService: PointService,
+) {
     private val logger: Logger = LoggerFactory.getLogger(javaClass)
 
     /**
@@ -22,8 +29,10 @@ class PointController {
     @GetMapping("{id}")
     fun point(
         @PathVariable id: Long,
-    ): UserPoint {
-        return UserPoint(0, 0, 0)
+    ): ResponseEntity<UserPointResponse> {
+        logger.info("point")
+        val response = pointService.getUserPoint(id)
+        return ResponseEntity.ok(response)
     }
 
     /**
@@ -32,8 +41,9 @@ class PointController {
     @GetMapping("{id}/histories")
     fun history(
         @PathVariable id: Long,
-    ): List<PointHistory> {
-        return emptyList()
+    ): ResponseEntity<List<PointHistoryResponse>> {
+        val response = pointService.getPointHistory(id)
+        return ResponseEntity.ok(response)
     }
 
     /**
@@ -43,8 +53,10 @@ class PointController {
     fun charge(
         @PathVariable id: Long,
         @RequestBody amount: Long,
-    ): UserPoint {
-        return UserPoint(0, 0, 0)
+    ): ResponseEntity<ChargePointResponse> {
+        logger.info("charge")
+        val response = pointService.chargePoint(PointRequest(id, amount))
+        return ResponseEntity.ok(response)
     }
 
     /**
@@ -54,7 +66,8 @@ class PointController {
     fun use(
         @PathVariable id: Long,
         @RequestBody amount: Long,
-    ): UserPoint {
-        return UserPoint(0, 0, 0)
+    ): ResponseEntity<UsePointResponse> {
+        val response = pointService.usePoint(PointRequest(id, amount))
+        return ResponseEntity.ok(response)
     }
 }
