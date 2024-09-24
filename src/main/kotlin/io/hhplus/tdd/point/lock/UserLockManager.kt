@@ -19,8 +19,6 @@ class UserLockManager {
 
     fun unlock(userId: Long) {
         val lock = getLock(userId)
-        if (lock.isHeldByCurrentThread) {
-            lock.unlock()
-        }
+        lock.unlock()
     }
 }

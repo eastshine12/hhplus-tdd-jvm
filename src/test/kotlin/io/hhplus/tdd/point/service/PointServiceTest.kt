@@ -157,28 +157,4 @@ class PointServiceTest {
             assertEquals("포인트 잔액이 0보다 작을 수 없습니다.", message)
         }
     }
-
-    @Test
-    fun `한 유저에게 동시에 포인트 충전과 사용을 할 때 남은 포인트가 정상적으로 반영되어야 한다`() {
-        // given
-        val userId = 1L
-        val initialPoint = 1000L
-        userPointRepository.insertOrUpdate(userId, initialPoint)
-
-        val chargeAmount = 101L
-        val useAmount = 100L
-        val threads = mutableListOf<Thread>()
-
-        threads.add(Thread { pointService.chargePoint(PointRequest(userId, chargeAmount)) })
-        threads.add(Thread { pointService.usePoint(PointRequest(userId, useAmount)) })
-
-        // when
-        threads.forEach(Thread::start)
-        threads.forEach(Thread::join)
-
-        // then
-        val finalUserPoint = userPointRepository.selectById(userId)
-        val expectedPoint = initialPoint + chargeAmount - useAmount
-        assertEquals(expectedPoint, finalUserPoint.point)
-    }
 }

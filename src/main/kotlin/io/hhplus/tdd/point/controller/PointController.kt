@@ -30,7 +30,6 @@ class PointController(
     fun point(
         @PathVariable id: Long,
     ): ResponseEntity<UserPointResponse> {
-        logger.info("point")
         val response = pointService.getUserPoint(id)
         return ResponseEntity.ok(response)
     }
@@ -54,7 +53,6 @@ class PointController(
         @PathVariable id: Long,
         @RequestBody amount: Long,
     ): ResponseEntity<ChargePointResponse> {
-        logger.info("charge")
         val response = pointService.chargePoint(PointRequest(id, amount))
         return ResponseEntity.ok(response)
     }
