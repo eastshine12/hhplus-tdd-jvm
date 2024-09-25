@@ -7,10 +7,6 @@ data class UserPoint(
     val point: Long,
     val updateMillis: Long,
 ) {
-    companion object {
-        const val MAX_BALANCE: Long = 1_000_000L
-    }
-
     init {
         validate()
     }

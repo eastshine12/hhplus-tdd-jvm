@@ -29,4 +29,12 @@ class ApiControllerAdvice : ResponseEntityExceptionHandler() {
             HttpStatus.BAD_REQUEST,
         )
     }
+
+    @ExceptionHandler(LockAcquisitionException::class)
+    fun handleLockAcquisitionException(e: LockAcquisitionException): ResponseEntity<ErrorResponse> {
+        return ResponseEntity(
+            ErrorResponse("423", e.message ?: "락 획득에 실패했습니다."),
+            HttpStatus.LOCKED,
+        )
+    }
 }
