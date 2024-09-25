@@ -1,32 +1,38 @@
 package io.hhplus.tdd.point.service
 
 import io.hhplus.tdd.point.domain.TransactionType
-import io.hhplus.tdd.point.domain.UserPoint
 import io.hhplus.tdd.point.dto.PointHistoryResponse
 import io.hhplus.tdd.point.dto.PointRequest
-import io.hhplus.tdd.point.exception.InvalidAmountException
-import io.hhplus.tdd.point.lock.UserLockManager
+import io.hhplus.tdd.point.helper.IPointConverter
+import io.hhplus.tdd.point.helper.IPointValidateHelper
+import io.hhplus.tdd.point.lock.IUserLockManager
 import io.hhplus.tdd.point.repository.PointHistoryRepository
 import io.hhplus.tdd.point.repository.UserPointRepository
+import io.hhplus.tdd.point.testdoubles.FakePointConverter
 import io.hhplus.tdd.point.testdoubles.FakePointHistoryRepository
+import io.hhplus.tdd.point.testdoubles.FakePointValidateHelper
+import io.hhplus.tdd.point.testdoubles.FakeUserLockManager
 import io.hhplus.tdd.point.testdoubles.FakeUserPointRepository
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 
 class PointServiceTest {
     private lateinit var pointHistoryRepository: PointHistoryRepository
     private lateinit var userPointRepository: UserPointRepository
+    private lateinit var userLockManager: IUserLockManager
+    private lateinit var pointValidateHelper: IPointValidateHelper
+    private lateinit var pointConverter: IPointConverter
     private lateinit var pointService: PointService
-    private lateinit var userLockManager: UserLockManager
 
     @BeforeEach
     fun setup() {
         pointHistoryRepository = FakePointHistoryRepository()
         userPointRepository = FakeUserPointRepository()
-        userLockManager = UserLockManager()
-        pointService = PointServiceImpl(pointHistoryRepository, userPointRepository, userLockManager)
+        userLockManager = FakeUserLockManager()
+        pointValidateHelper = FakePointValidateHelper()
+        pointConverter = FakePointConverter()
+        pointService = PointServiceImpl(pointHistoryRepository, userPointRepository, userLockManager, pointValidateHelper, pointConverter)
     }
 
     @Test
@@ -103,22 +109,6 @@ class PointServiceTest {
     }
 
     @Test
-    fun `포인트 충전 시 최대 금액을 초과하면 예외를 발생한다`() {
-        // given
-        val userId = 1L
-        val existPoint = UserPoint.MAX_BALANCE - 100L
-        val chargeAmount = 101L
-        userPointRepository.insertOrUpdate(userId, existPoint)
-
-        // when & then
-        assertThrows<InvalidAmountException> {
-            pointService.chargePoint(PointRequest(userId, chargeAmount))
-        }.apply {
-            assertEquals("최대 잔액을 초과할 수 없습니다. 최대 잔액: ${UserPoint.MAX_BALANCE}", message)
-        }
-    }
-
-    @Test
     fun `포인트를 사용 후에 잔액과 사용내역이 정상적으로 반영되어야 한다`() {
         // given
         val userId = 1L
@@ -140,21 +130,5 @@ class PointServiceTest {
         assertEquals(2, history.size)
         assertEquals(useAmount, history[1].amount)
         assertEquals(TransactionType.USE, history[1].type)
-    }
-
-    @Test
-    fun `포인트 사용 시 0원 미만이 남게되면 예외를 발생한다`() {
-        // given
-        val userId = 1L
-        val existPoint = 100L
-        val useAmount = 101L
-        userPointRepository.insertOrUpdate(userId, existPoint)
-
-        // when & then
-        assertThrows<InvalidAmountException> {
-            pointService.usePoint(PointRequest(userId, useAmount))
-        }.apply {
-            assertEquals("포인트 잔액이 0보다 작을 수 없습니다.", message)
-        }
     }
 }
