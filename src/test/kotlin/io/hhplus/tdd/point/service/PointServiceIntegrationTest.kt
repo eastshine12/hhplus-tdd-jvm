@@ -29,7 +29,7 @@ class PointServiceIntegrationTest
         @Nested
         @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
         @DisplayName("한명의 유저에게 포인트 충전과 사용을 동시에 할 때")
-        inner class UserPointTest {
+        inner class OneUserPointTest {
             private val threadPools = Executors.newFixedThreadPool(1000)
             private val chargeExceptionCount = AtomicInteger(0)
             private val useExceptionCount = AtomicInteger(0)
@@ -151,6 +151,47 @@ class PointServiceIntegrationTest
                 assertEquals(operationCount * 2 - chargeExceptionCount.get() - useExceptionCount.get(), history.size)
                 assertEquals(history.count { it.type == TransactionType.CHARGE }, operationCount - chargeExceptionCount.get())
                 assertEquals(history.count { it.type == TransactionType.USE }, operationCount - useExceptionCount.get())
+            }
+        }
+
+        @Nested
+        @DisplayName("두명의 유저가 동시에 포인트 충전을 할 때")
+        inner class TwoUserPointsTest {
+            private val threadPools = Executors.newFixedThreadPool(1)
+            private val initPoint = 100_000L
+            private val operationCount = 10_000
+
+            @Test
+            @DisplayName("포인트 잔액과 이력이 정상적으로 저장되어야 한다.")
+            fun mustNeverBeAffectedByOtherUsersLock() {
+                // given
+                val userId1 = 4L
+                val userId2 = 5L
+                userPointRepository.insertOrUpdate(userId1, initPoint)
+                userPointRepository.insertOrUpdate(userId2, initPoint)
+
+                // when
+                repeat(operationCount) {
+                    threadPools.execute {
+                        pointService.chargePoint(PointRequest(userId1, 10L))
+                    }
+                    threadPools.execute {
+                        pointService.chargePoint(PointRequest(userId2, 10L))
+                    }
+                }
+                threadPools.shutdown()
+                threadPools.awaitTermination(1, TimeUnit.MINUTES)
+
+                // then
+                val userPoint1 = pointService.getUserPoint(userId1)
+                val userPoint2 = pointService.getUserPoint(userId2)
+                assertEquals(200_000, userPoint1.point)
+                assertEquals(200_000, userPoint2.point)
+
+                val pointHistory1 = pointService.getPointHistory(userId1)
+                val pointHistory2 = pointService.getPointHistory(userId2)
+                assertEquals(10_000, pointHistory1.size)
+                assertEquals(10_000, pointHistory2.size)
             }
         }
     }
