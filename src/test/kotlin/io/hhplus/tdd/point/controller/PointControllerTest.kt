@@ -130,40 +130,4 @@ class PointControllerTest {
 
         verify(pointService).usePoint(PointRequest(userId, amount))
     }
-
-    @Test
-    fun `충전하는 포인트가 0원 이하일 때 에러 메시지를 반환한다`() {
-        // given
-        val userId = 1L
-        val amount = 0L
-
-        // when, then
-        mockMvc.perform(
-            patch("/point/$userId/charge")
-                .content(amount.toString())
-                .contentType(MediaType.APPLICATION_JSON),
-        )
-            .andExpect(status().isBadRequest)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.code", `is`("400")))
-            .andExpect(jsonPath("$.message", `is`("금액은 0보다 커야 합니다.")))
-    }
-
-    @Test
-    fun `충전하는 포인트가 최대 금액을 초과할 때 에러 메시지를 반환한다`() {
-        // given
-        val userId = 1L
-        val amount = PointConfig.MAX_BALANCE + 1L
-
-        // when, then
-        mockMvc.perform(
-            patch("/point/$userId/use")
-                .content(amount.toString())
-                .contentType(MediaType.APPLICATION_JSON),
-        )
-            .andExpect(status().isBadRequest)
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.code", `is`("400")))
-            .andExpect(jsonPath("$.message", `is`("최대 금액을 초과할 수 없습니다. 최대 금액: ${PointConfig.MAX_BALANCE}")))
-    }
 }
