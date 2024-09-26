@@ -40,7 +40,9 @@ class PointServiceImpl(
             val userPoint = userPointRepository.selectById(pointRequest.userId)
             pointValidateHelper.validateMaxBalance(userPoint.point, pointRequest.amount)
             val updateUserPoint = userPointRepository.insertOrUpdate(pointRequest.userId, userPoint.point + pointRequest.amount)
-            pointHistoryRepository.insert(pointRequest.userId, pointRequest.amount, TransactionType.CHARGE, System.currentTimeMillis())
+            synchronized(this) {
+                pointHistoryRepository.insert(pointRequest.userId, pointRequest.amount, TransactionType.CHARGE, System.currentTimeMillis())
+            }
             pointConverter.toChargePointResponse(updateUserPoint)
         }
     }

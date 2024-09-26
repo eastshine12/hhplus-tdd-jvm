@@ -157,7 +157,7 @@ class PointServiceIntegrationTest
         @Nested
         @DisplayName("두명의 유저가 동시에 포인트 충전을 할 때")
         inner class TwoUserPointsTest {
-            private val threadPools = Executors.newFixedThreadPool(1)
+            private val threadPools = Executors.newFixedThreadPool(1000)
             private val initPoint = 100_000L
             private val operationCount = 10_000
 
