@@ -4,11 +4,13 @@ import io.hhplus.tdd.point.domain.TransactionType
 import io.hhplus.tdd.point.dto.PointHistoryResponse
 import io.hhplus.tdd.point.dto.PointRequest
 import io.hhplus.tdd.point.helper.IPointConverter
+import io.hhplus.tdd.point.helper.IPointHistoryQueueManager
 import io.hhplus.tdd.point.helper.IPointValidateHelper
 import io.hhplus.tdd.point.lock.IUserLockManager
 import io.hhplus.tdd.point.repository.PointHistoryRepository
 import io.hhplus.tdd.point.repository.UserPointRepository
 import io.hhplus.tdd.point.testdoubles.FakePointConverter
+import io.hhplus.tdd.point.testdoubles.FakePointHistoryQueueManager
 import io.hhplus.tdd.point.testdoubles.FakePointHistoryRepository
 import io.hhplus.tdd.point.testdoubles.FakePointValidateHelper
 import io.hhplus.tdd.point.testdoubles.FakeUserLockManager
@@ -23,6 +25,7 @@ class PointServiceTest {
     private lateinit var userLockManager: IUserLockManager
     private lateinit var pointValidateHelper: IPointValidateHelper
     private lateinit var pointConverter: IPointConverter
+    private lateinit var pointHistoryQueueManager: IPointHistoryQueueManager
     private lateinit var pointService: PointService
 
     @BeforeEach
@@ -32,7 +35,17 @@ class PointServiceTest {
         userLockManager = FakeUserLockManager()
         pointValidateHelper = FakePointValidateHelper()
         pointConverter = FakePointConverter()
-        pointService = PointServiceImpl(pointHistoryRepository, userPointRepository, userLockManager, pointValidateHelper, pointConverter)
+        pointConverter = FakePointConverter()
+        pointHistoryQueueManager = FakePointHistoryQueueManager(pointHistoryRepository)
+        pointService =
+            PointServiceImpl(
+                pointHistoryRepository,
+                userPointRepository,
+                userLockManager,
+                pointValidateHelper,
+                pointConverter,
+                pointHistoryQueueManager,
+            )
     }
 
     @Test

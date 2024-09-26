@@ -2,11 +2,13 @@ package io.hhplus.tdd.point.service
 
 import io.hhplus.tdd.point.domain.TransactionType
 import io.hhplus.tdd.point.dto.ChargePointResponse
+import io.hhplus.tdd.point.dto.PointHistoryQueueItem
 import io.hhplus.tdd.point.dto.PointHistoryResponse
 import io.hhplus.tdd.point.dto.PointRequest
 import io.hhplus.tdd.point.dto.UsePointResponse
 import io.hhplus.tdd.point.dto.UserPointResponse
 import io.hhplus.tdd.point.helper.IPointConverter
+import io.hhplus.tdd.point.helper.IPointHistoryQueueManager
 import io.hhplus.tdd.point.helper.IPointValidateHelper
 import io.hhplus.tdd.point.lock.IUserLockManager
 import io.hhplus.tdd.point.repository.PointHistoryRepository
@@ -20,6 +22,7 @@ class PointServiceImpl(
     private val userLockManager: IUserLockManager,
     private val pointValidateHelper: IPointValidateHelper,
     private val pointConverter: IPointConverter,
+    private val pointHistoryQueueManager: IPointHistoryQueueManager,
 ) : PointService {
     override fun getUserPoint(userId: Long): UserPointResponse {
         return userLockManager.executeWithLock(userId) {
@@ -40,9 +43,7 @@ class PointServiceImpl(
             val userPoint = userPointRepository.selectById(pointRequest.userId)
             pointValidateHelper.validateMaxBalance(userPoint.point, pointRequest.amount)
             val updateUserPoint = userPointRepository.insertOrUpdate(pointRequest.userId, userPoint.point + pointRequest.amount)
-            synchronized(this) {
-                pointHistoryRepository.insert(pointRequest.userId, pointRequest.amount, TransactionType.CHARGE, System.currentTimeMillis())
-            }
+            pointHistoryQueueManager.put(PointHistoryQueueItem(pointRequest.userId, pointRequest.amount, TransactionType.CHARGE))
             pointConverter.toChargePointResponse(updateUserPoint)
         }
     }
@@ -52,7 +53,7 @@ class PointServiceImpl(
             val userPoint = userPointRepository.selectById(pointRequest.userId)
             pointValidateHelper.validateMinBalance(userPoint.point, pointRequest.amount)
             val updateUserPoint = userPointRepository.insertOrUpdate(pointRequest.userId, userPoint.point - pointRequest.amount)
-            pointHistoryRepository.insert(pointRequest.userId, pointRequest.amount, TransactionType.USE, System.currentTimeMillis())
+            pointHistoryQueueManager.put(PointHistoryQueueItem(pointRequest.userId, pointRequest.amount, TransactionType.USE))
             pointConverter.toUsePointResponse(updateUserPoint)
         }
     }

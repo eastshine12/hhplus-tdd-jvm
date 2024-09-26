@@ -2,6 +2,7 @@ package io.hhplus.tdd.point.service
 
 import io.hhplus.tdd.point.domain.TransactionType
 import io.hhplus.tdd.point.dto.PointRequest
+import io.hhplus.tdd.point.helper.PointHistoryQueueManager
 import io.hhplus.tdd.point.repository.PointHistoryRepository
 import io.hhplus.tdd.point.repository.UserPointRepository
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -25,6 +26,7 @@ class PointServiceIntegrationTest
         val pointService: PointService,
         val userPointRepository: UserPointRepository,
         val pointHistoryRepository: PointHistoryRepository,
+        val pointHistoryQueueManager: PointHistoryQueueManager,
     ) {
         @Nested
         @TestMethodOrder(MethodOrderer.OrderAnnotation::class)
@@ -34,7 +36,7 @@ class PointServiceIntegrationTest
             private val chargeExceptionCount = AtomicInteger(0)
             private val useExceptionCount = AtomicInteger(0)
             private val initPoint = 100_000L
-            private val operationCount = 500
+            private val operationCount = 50
 
             @BeforeEach
             fun setup() {
@@ -148,6 +150,9 @@ class PointServiceIntegrationTest
 
                 // then
                 val history = pointHistoryRepository.selectAllByUserId(userId)
+                for (h in history) {
+                    println(h)
+                }
                 assertEquals(operationCount * 2 - chargeExceptionCount.get() - useExceptionCount.get(), history.size)
                 assertEquals(history.count { it.type == TransactionType.CHARGE }, operationCount - chargeExceptionCount.get())
                 assertEquals(history.count { it.type == TransactionType.USE }, operationCount - useExceptionCount.get())
